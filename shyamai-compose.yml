@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  shyamai-web:
+    image: nginx:alpine
+    container_name: shyamai-web
+    restart: unless-stopped
+    volumes:
+      - /var/www/shyamai:/usr/share/nginx/html:ro
+      - /tmp/shyamai_nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.shyamai.rule=Host(`shyamai.in`) || Host(`www.shyamai.in`)"
+      - "traefik.http.routers.shyamai.entrypoints=http"
+      - "traefik.http.services.shyamai.loadbalancer.server.port=80"
+      - "traefik.http.routers.shyamai-https.rule=Host(`shyamai.in`) || Host(`www.shyamai.in`)"
+      - "traefik.http.routers.shyamai-https.entrypoints=https"
+      - "traefik.http.routers.shyamai-https.tls=true"
+      - "traefik.http.routers.shyamai-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.shyamai-https.service=shyamai"
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
