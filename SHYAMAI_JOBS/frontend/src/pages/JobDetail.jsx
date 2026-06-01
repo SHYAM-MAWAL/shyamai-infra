@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   MapPinIcon, BriefcaseIcon, ClockIcon, IndianRupeeIcon,
   ExternalLinkIcon, ArrowLeftIcon, BookmarkIcon, BuildingIcon,
-  CalendarIcon, ShareIcon
+  CalendarIcon, ShareIcon, LockIcon
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { jobsAPI } from '../services/api'
@@ -20,6 +20,7 @@ const SOURCE_LOGO = {
 export default function JobDetail() {
   const { id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -135,16 +136,30 @@ export default function JobDetail() {
 
         {/* Apply button */}
         {job.source_url && (
-          <div className="mt-6">
-            <a
-              href={job.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary inline-flex items-center gap-2 text-base px-6 py-3"
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => {
+                if (!user) { navigate('/login'); return }
+                window.open(job.source_url, '_blank', 'noopener,noreferrer')
+              }}
+              className={`inline-flex items-center gap-2 text-base px-6 py-3 rounded-lg font-semibold transition-colors ${
+                user
+                  ? 'bg-brand-600 text-white hover:bg-brand-700'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
             >
+              {!user && <LockIcon className="w-4 h-4" />}
               Apply on {job.source ? job.source.charAt(0).toUpperCase() + job.source.slice(1) : 'Job Site'}
               <ExternalLinkIcon className="w-4 h-4" />
-            </a>
+            </button>
+            {!user && (
+              <p className="text-sm text-gray-500">
+                <Link to="/login" className="text-brand-600 hover:underline font-medium">Sign in</Link>
+                {' '}or{' '}
+                <Link to="/register" className="text-brand-600 hover:underline font-medium">register</Link>
+                {' '}to apply
+              </p>
+            )}
           </div>
         )}
 

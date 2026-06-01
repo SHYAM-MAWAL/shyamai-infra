@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   MapPinIcon, BriefcaseIcon, ClockIcon, IndianRupeeIcon,
-  BookmarkIcon, ExternalLinkIcon, BuildingIcon
+  BookmarkIcon, ExternalLinkIcon, BuildingIcon, LockIcon
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
@@ -24,7 +24,14 @@ const WORK_TYPE_COLORS = {
 
 export default function JobCard({ job, onSaveToggle }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [saving, setSaving] = useState(false)
+
+  const handleApply = (e) => {
+    e.preventDefault()
+    if (!user) { navigate('/login'); return }
+    if (job.source_url) window.open(job.source_url, '_blank', 'noopener,noreferrer')
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -126,9 +133,26 @@ export default function JobCard({ job, onSaveToggle }) {
               </span>
             )}
           </div>
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <ClockIcon className="w-3 h-3" />{postedAgo}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <ClockIcon className="w-3 h-3" />{postedAgo}
+            </span>
+            {job.source_url && (
+              <button
+                onClick={handleApply}
+                title={user ? 'Apply for this job' : 'Sign in to apply'}
+                className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
+                  user
+                    ? 'text-brand-600 bg-brand-50 hover:bg-brand-100'
+                    : 'text-gray-400 bg-gray-100'
+                }`}
+              >
+                {!user && <LockIcon className="w-3 h-3" />}
+                Apply
+                <ExternalLinkIcon className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Link>
