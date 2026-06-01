@@ -436,7 +436,7 @@ function UsersPanel() {
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-gray-50 z-10">
             <tr>
-              {['Email','Name','Role','Status','Saved Jobs','Joined','Actions'].map(h => (
+              {['Email','Name','Role','Status','Verified','Saved Jobs','Joined','Actions'].map(h => (
                 <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase border-b">{h}</th>
               ))}
             </tr>
@@ -444,7 +444,7 @@ function UsersPanel() {
           <tbody>
             {loading ? (
               Array(3).fill(0).map((_, i) => (
-                <tr key={i}><td colSpan={7} className="px-4 py-3">
+                <tr key={i}><td colSpan={8} className="px-4 py-3">
                   <div className="h-4 bg-gray-100 rounded animate-pulse" />
                 </td></tr>
               ))
@@ -465,6 +465,11 @@ function UsersPanel() {
                 <td className="px-4 py-3">
                   <span className={`badge ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
                     {u.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`badge ${u.is_verified ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-600'}`}>
+                    {u.is_verified ? '✓ Verified' : 'Unverified'}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 text-center">{u.saved_count}</td>
