@@ -36,6 +36,41 @@ with engine.connect() as conn:
         ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expires TIMESTAMPTZ;
     """))
     conn.execute(text("UPDATE users SET is_verified = true WHERE role = 'admin'"))
+
+    # Fix BEFORE DELETE trigger: must RETURN OLD (not NEW) to allow the delete to proceed.
+    # RETURN NEW in a DELETE trigger returns NULL which silently cancels all deletes.
+    conn.execute(text("""
+        CREATE OR REPLACE FUNCTION protect_main_admin() RETURNS TRIGGER AS $fn$
+        BEGIN
+          IF OLD.email ILIKE 'Admin@shyamai.in' THEN
+            IF TG_OP = 'DELETE' THEN
+              RAISE EXCEPTION 'Admin@shyamai.in is the main admin and cannot be deleted.';
+            END IF;
+            IF TG_OP = 'UPDATE' AND NEW.is_active = false THEN
+              RAISE EXCEPTION 'Admin@shyamai.in is the main admin and cannot be disabled.';
+            END IF;
+          END IF;
+          IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+          RETURN NEW;
+        END;
+        $fn$ LANGUAGE plpgsql;
+    """))
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS _trigger_setup (id int);
+    """))
+    conn.execute(text("""
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.triggers
+            WHERE trigger_name = 'trg_protect_main_admin'
+              AND event_object_table = 'users'
+          ) THEN
+            CREATE TRIGGER trg_protect_main_admin
+            BEFORE DELETE OR UPDATE ON users
+            FOR EACH ROW EXECUTE FUNCTION protect_main_admin();
+          END IF;
+        END $$;
+    """))
     conn.commit()
 
 db = SessionLocal()
