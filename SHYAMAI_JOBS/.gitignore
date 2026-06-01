@@ -1,0 +1,25 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routers/__pycache__/
+backend/services/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# Environment / secrets
+.env
+*.env
+
+# Logs / runtime
+*.log
+*.pid
+/tmp/
+
+# OS
+.DS_Store
