@@ -4,7 +4,7 @@ import {
   DatabaseIcon, TableIcon, PlayIcon, RefreshCwIcon,
   PencilIcon, Trash2Icon, XIcon, CheckIcon, ChevronLeftIcon,
   ChevronRightIcon, CopyIcon, AlertTriangleIcon, TerminalIcon,
-  UsersIcon, BookmarkIcon, ShieldIcon, ShieldOffIcon
+  UsersIcon, BookmarkIcon, ShieldIcon, ShieldOffIcon, BadgeCheckIcon
 } from 'lucide-react'
 import { dbAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -407,6 +407,12 @@ function UsersPanel() {
     load()
   }
 
+  const verifyUser = async (u) => {
+    await dbAPI.updateUser(u.id, { is_verified: true })
+    toast.success(`${u.email} verified`)
+    load()
+  }
+
   const changeRole = async (u, role) => {
     await dbAPI.updateUser(u.id, { role })
     toast.success(`Role changed to ${role}`)
@@ -483,6 +489,12 @@ function UsersPanel() {
                     </span>
                   ) : (
                     <div className="flex items-center gap-1">
+                      {!u.is_verified && (
+                        <button onClick={() => verifyUser(u)} title="Mark as verified"
+                          className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-400 hover:text-blue-600">
+                          <BadgeCheckIcon className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button onClick={() => toggleActive(u)} title={u.is_active ? 'Deactivate' : 'Activate'}
                         className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700">
                         {u.is_active ? <ShieldOffIcon className="w-3.5 h-3.5" /> : <ShieldIcon className="w-3.5 h-3.5" />}

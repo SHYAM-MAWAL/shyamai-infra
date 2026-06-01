@@ -322,6 +322,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[str] = None
     is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
 
 
 def _get_user_email(db: Session, user_id: str) -> str:
