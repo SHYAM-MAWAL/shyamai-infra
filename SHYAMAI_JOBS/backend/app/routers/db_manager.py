@@ -347,10 +347,29 @@ def update_user(
     if not updates:
         raise HTTPException(400, "Nothing to update")
 
+    # Check if admin is manually verifying an unverified user
+    manually_verifying = payload.is_verified is True
+    if manually_verifying:
+        was_verified = db.execute(
+            text("SELECT is_verified FROM users WHERE id::text = :id"), {"id": user_id}
+        ).scalar()
+        manually_verifying = not was_verified  # only send email if flipping from False → True
+
     set_clause = ", ".join([f"{k} = :{k}" for k in updates])
     params = {**updates, "uid": user_id}
     db.execute(text(f"UPDATE users SET {set_clause}, updated_at = NOW() WHERE id::text = :uid"), params)
     db.commit()
+
+    if manually_verifying:
+        full_name = db.execute(
+            text("SELECT full_name FROM users WHERE id::text = :id"), {"id": user_id}
+        ).scalar()
+        try:
+            from services.email_service import send_account_approved_email
+            send_account_approved_email(email, full_name or "")
+        except Exception as exc:
+            print(f"[email] Failed to send approval email to {email}: {exc}")
+
     return {"message": "User updated"}
 
 
