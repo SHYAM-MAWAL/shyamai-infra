@@ -1,5 +1,7 @@
 """Export check results to CSV, Excel (openpyxl) or JSON."""
 
+from __future__ import annotations
+
 import csv
 import json
 import logging

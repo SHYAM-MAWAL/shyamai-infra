@@ -8,6 +8,8 @@ v2: password auth, SQLite run history with compare, scheduled checks,
 email alerts, per-domain rate limiting, custom URL lists, uvloop.
 """
 
+from __future__ import annotations
+
 import asyncio
 import copy
 import json

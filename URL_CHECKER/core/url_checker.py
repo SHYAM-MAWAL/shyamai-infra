@@ -6,6 +6,8 @@ to GET when the server rejects HEAD. Each finished result is delivered
 through a callback so the UI can stream progress in real time.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time

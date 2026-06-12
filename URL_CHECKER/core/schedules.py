@@ -14,6 +14,8 @@ Legacy schedules without `start` fall back to created_at (exclusive),
 so they never fire retroactively.
 """
 
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 
 

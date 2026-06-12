@@ -1,5 +1,7 @@
 """Email alerts — sent after a run when new errors appear or success rate drops."""
 
+from __future__ import annotations
+
 import logging
 import smtplib
 from email.message import EmailMessage

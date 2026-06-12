@@ -5,6 +5,8 @@ so runs can be compared over time (new errors / fixed / still broken / slower).
 Old runs are purged after `retention_days` (default 15).
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import sqlite3

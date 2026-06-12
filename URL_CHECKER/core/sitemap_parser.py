@@ -5,6 +5,8 @@ aiohttp and extracts every URL found in <loc> tags. Up to 50 sitemaps are
 fetched concurrently.
 """
 
+from __future__ import annotations
+
 import asyncio
 import gzip
 import logging

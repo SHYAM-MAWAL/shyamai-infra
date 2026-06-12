@@ -1,5 +1,7 @@
 """Data models shared by the sitemap parser, URL checker and exporter."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 
