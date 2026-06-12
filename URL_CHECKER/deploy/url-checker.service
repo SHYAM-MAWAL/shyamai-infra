@@ -1,0 +1,19 @@
+[Unit]
+Description=Sitemap URL Health Checker
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/URL_CHECKER
+ExecStart=/root/URL_CHECKER/venv/bin/gunicorn \
+          --worker-class gthread \
+          --workers 1 \
+          --threads 8 \
+          --bind 0.0.0.0:5000 \
+          --timeout 300 \
+          app_web:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

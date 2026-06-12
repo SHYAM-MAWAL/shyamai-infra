@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitemap URL Health Checker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>🔍 Sitemap URL Health Checker</h1>
+    <nav class="main-nav">
+      <a href="/" class="active">Checker</a>
+      <a href="/history">History</a>
+      <a href="/logout">Logout</a>
+    </nav>
+    <span id="conn-status" class="conn-badge offline">connecting…</span>
+  </header>
+
+  <main class="container">
+
+    <!-- ── Sitemaps ─────────────────────────────────────────── -->
+    <section class="card">
+      <h2>Sitemaps</h2>
+      <div class="row">
+        <input type="url" id="sitemap-input" placeholder="https://example.com/sitemap.xml">
+        <button id="btn-add-sitemap" class="btn primary">Add Sitemap</button>
+        <button id="btn-clear-sitemaps" class="btn danger ghost">Clear All</button>
+      </div>
+      <ul id="sitemap-list" class="sitemap-list"></ul>
+      <details class="custom-urls">
+        <summary>…or paste a custom URL list instead</summary>
+        <textarea id="custom-urls-input" rows="5"
+                  placeholder="https://example.com/page1&#10;https://example.com/page2"></textarea>
+        <button id="btn-load-urls" class="btn primary">Load URLs</button>
+      </details>
+    </section>
+
+    <!-- ── Settings ─────────────────────────────────────────── -->
+    <section class="card">
+      <h2>Settings</h2>
+      <div class="settings-grid">
+        <label>Timeout (s) <input type="number" id="cfg-timeout" min="1" max="120" value="10"></label>
+        <label>Max concurrent <input type="number" id="cfg-concurrent" min="1" max="200" value="20"></label>
+        <label>Retries <input type="number" id="cfg-retries" min="0" max="10" value="2"></label>
+        <label>User-Agent <input type="text" id="cfg-useragent" value="URLHealthChecker/1.0"></label>
+        <label>Per-domain limit (0 = off) <input type="number" id="cfg-domainlimit" min="0" max="100" value="0"></label>
+        <label class="check"><input type="checkbox" id="cfg-redirects" checked> Follow redirects</label>
+        <label class="check"><input type="checkbox" id="cfg-ssl" checked> Verify SSL</label>
+        <label class="check"><input type="checkbox" id="cfg-head" checked> Use HEAD first</label>
+        <button id="btn-save-config" class="btn primary">Save Settings</button>
+      </div>
+    </section>
+
+    <!-- ── Automation, alerts & security ───────────────────── -->
+    <section class="card">
+      <h2>Automation &amp; Alerts</h2>
+      <div class="sched-builder">
+        <label class="inline">📅 Run at <input type="datetime-local" id="sch-datetime"></label>
+        <label class="inline">Repeat
+          <select id="sch-type">
+            <option value="once">Once (no repeat)</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="interval">Every N hours</option>
+          </select>
+        </label>
+        <span class="weekday-picker hidden" id="sch-days-wrap">
+          <label><input type="checkbox" value="0"> Mon</label>
+          <label><input type="checkbox" value="1"> Tue</label>
+          <label><input type="checkbox" value="2"> Wed</label>
+          <label><input type="checkbox" value="3"> Thu</label>
+          <label><input type="checkbox" value="4"> Fri</label>
+          <label><input type="checkbox" value="5"> Sat</label>
+          <label><input type="checkbox" value="6"> Sun</label>
+        </span>
+        <label class="inline hidden" id="sch-interval-wrap">Hours <input type="number" id="sch-interval" min="0.5" max="168" step="0.5" value="6"></label>
+        <button id="btn-add-schedule" class="btn primary">＋ Add Schedule</button>
+      </div>
+      <p class="muted hint">Pick the date &amp; time in the calendar, choose how it repeats, then Add. Daily/Weekly run at that time starting from that date.</p>
+      <ul id="schedule-list" class="sitemap-list"></ul>
+      <div class="settings-grid">
+        <label>Keep history (days) <input type="number" id="set-retention" min="1" max="365" value="15"></label>
+      </div>
+      <div class="settings-grid alert-grid">
+        <label class="check"><input type="checkbox" id="set-alerts-enabled"> Email alerts (new errors / low success)</label>
+        <label>Alert if success &lt; (%) <input type="number" id="set-minsuccess" min="0" max="100" value="90"></label>
+        <label>SMTP host <input type="text" id="set-smtp-host" placeholder="smtp.gmail.com"></label>
+        <label>SMTP port <input type="number" id="set-smtp-port" value="587"></label>
+        <label>SMTP user <input type="text" id="set-smtp-user"></label>
+        <label>SMTP password <input type="password" id="set-smtp-pass"></label>
+        <label>Send to <input type="email" id="set-mail-to"></label>
+      </div>
+      <div class="row">
+        <button id="btn-save-settings" class="btn primary">Save Automation Settings</button>
+        <button id="btn-test-alert" class="btn ghost">Send Test Email</button>
+        <span class="spacer"></span>
+        <input type="password" id="pw-current" placeholder="Current password">
+        <input type="password" id="pw-new" placeholder="New password (min 6)">
+        <button id="btn-change-pw" class="btn ghost">Change Password</button>
+      </div>
+    </section>
+
+    <!-- ── Actions / progress ──────────────────────────────── -->
+    <section class="card">
+      <div class="row actions">
+        <button id="btn-fetch" class="btn primary big">⬇ Fetch URLs</button>
+        <button id="btn-check" class="btn success big" disabled>▶ Start Health Check</button>
+        <button id="btn-stop" class="btn danger big" disabled>■ Stop</button>
+        <span class="spacer"></span>
+        <button id="btn-export-csv" class="btn ghost" disabled>Export CSV</button>
+        <button id="btn-export-excel" class="btn ghost" disabled>Export Excel</button>
+        <button id="btn-export-json" class="btn ghost" disabled>Export JSON</button>
+      </div>
+      <div id="status-line" class="status-line">Add a sitemap URL to begin.</div>
+      <div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div>
+    </section>
+
+    <!-- ── Dashboard ────────────────────────────────────────── -->
+    <section class="card">
+      <h2>Dashboard</h2>
+      <div class="stats-grid">
+        <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">URLs checked</span></div>
+        <div class="stat ok"><span class="stat-value" id="stat-success">–</span><span class="stat-label">Success rate</span></div>
+        <div class="stat"><span class="stat-value" id="stat-avg">–</span><span class="stat-label">Avg response</span></div>
+        <div class="stat warn"><span class="stat-value" id="stat-slow">0</span><span class="stat-label">Slow URLs (&gt;2s)</span></div>
+        <div class="stat err"><span class="stat-value" id="stat-errors">0</span><span class="stat-label">Errors</span></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-box"><h3>Status codes</h3><canvas id="chart-status"></canvas></div>
+        <div class="chart-box"><h3>Response times</h3><canvas id="chart-times"></canvas></div>
+      </div>
+
+      <div class="dash-tables">
+        <div class="dash-table-box">
+          <h3>🐢 Top 10 Slowest URLs</h3>
+          <table class="data-table" id="slow-table">
+            <thead><tr><th>URL</th><th>Status</th><th>Time (ms)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="dash-table-box">
+          <h3>❌ Error URLs</h3>
+          <table class="data-table" id="error-table">
+            <thead><tr><th>URL</th><th>Status</th><th>Error</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Results table ────────────────────────────────────── -->
+    <section class="card">
+      <h2>Results</h2>
+      <div class="row">
+        <input type="search" id="search-input" placeholder="Search URLs…">
+        <select id="filter-status">
+          <option value="">All statuses</option>
+          <option value="2xx">2xx Success</option>
+          <option value="3xx">3xx Redirect</option>
+          <option value="4xx">4xx Client error</option>
+          <option value="5xx">5xx Server error</option>
+          <option value="error">Network errors</option>
+        </select>
+        <span id="results-count" class="muted"></span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="results-table">
+          <thead>
+            <tr>
+              <th data-sort="url">URL</th>
+              <th data-sort="status_code">Status</th>
+              <th data-sort="response_time_ms">Time (ms)</th>
+              <th data-sort="method">Method</th>
+              <th data-sort="error">Error / Redirect</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="muted hint">Right-click a row to copy the URL, copy the row, or open in browser.</p>
+    </section>
+  </main>
+
+  <!-- context menu (Fix 4) -->
+  <div id="context-menu" class="context-menu hidden">
+    <button data-action="copy-url">📋 Copy URL</button>
+    <button data-action="copy-row">📄 Copy Row</button>
+    <button data-action="open">🌐 Open in Browser</button>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

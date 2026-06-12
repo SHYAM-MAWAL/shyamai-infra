@@ -1,0 +1,8 @@
+venv/
+config.json
+history.db
+history.db-*
+logs/
+exports/
+__pycache__/
+*.pyc

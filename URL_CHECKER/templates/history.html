@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — URL Health Checker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>🔍 Sitemap URL Health Checker</h1>
+    <nav class="main-nav">
+      <a href="/">Checker</a>
+      <a href="/history" class="active">History</a>
+      <a href="/logout">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- ── Trends ───────────────────────────────────────────── -->
+    <section class="card">
+      <h2>Performance Trends</h2>
+      <p class="muted" id="trend-empty">No runs recorded yet — run a health check first.</p>
+      <div class="chart-box wide"><canvas id="chart-trend"></canvas></div>
+    </section>
+
+    <!-- ── Compare ──────────────────────────────────────────── -->
+    <section class="card">
+      <h2>Compare Runs</h2>
+      <div class="row">
+        <label class="inline">Older run <select id="cmp-old"></select></label>
+        <label class="inline">Newer run <select id="cmp-new"></select></label>
+        <button id="btn-compare" class="btn primary">Compare</button>
+        <span id="cmp-summary" class="muted"></span>
+      </div>
+
+      <div id="cmp-results" class="hidden">
+        <div class="bucket-grid">
+          <div class="bucket b-err">
+            <h3>🆕 New Errors <span id="cnt-new-errors" class="bucket-count">0</span></h3>
+            <table class="data-table"><thead><tr><th>URL</th><th>Was</th><th>Now</th></tr></thead><tbody id="tb-new-errors"></tbody></table>
+          </div>
+          <div class="bucket b-ok">
+            <h3>✅ Fixed <span id="cnt-fixed" class="bucket-count">0</span></h3>
+            <table class="data-table"><thead><tr><th>URL</th><th>Was</th><th>Now</th></tr></thead><tbody id="tb-fixed"></tbody></table>
+          </div>
+          <div class="bucket b-warn">
+            <h3>♻ Still Broken <span id="cnt-still" class="bucket-count">0</span></h3>
+            <table class="data-table"><thead><tr><th>URL</th><th>Was</th><th>Now</th></tr></thead><tbody id="tb-still"></tbody></table>
+          </div>
+          <div class="bucket b-slow">
+            <h3>🐢 Got Slower <span id="cnt-slower" class="bucket-count">0</span></h3>
+            <table class="data-table"><thead><tr><th>URL</th><th>Before</th><th>After</th><th>Δ ms</th></tr></thead><tbody id="tb-slower"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Run list ─────────────────────────────────────────── -->
+    <section class="card">
+      <h2>All Runs <span class="muted" id="retention-note"></span></h2>
+      <div class="table-wrap">
+        <table class="data-table" id="runs-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Date</th><th>Trigger</th><th>URLs</th>
+              <th>2xx</th><th>3xx</th><th>4xx</th><th>5xx</th><th>Err</th>
+              <th>Success</th><th>Avg ms</th><th>Slow</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Run detail ───────────────────────────────────────── -->
+    <section class="card hidden" id="detail-card">
+      <h2 id="detail-title">Run detail</h2>
+      <div class="table-wrap">
+        <table class="data-table" id="detail-table">
+          <thead><tr><th>URL</th><th>Status</th><th>Time (ms)</th><th>Error / Redirect</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+</body>
+</html>
